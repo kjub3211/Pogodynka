@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  proxy:
+    image: nginx:alpine
+    container_name: nginx
+    depends_on:
+      - backend
+    #Składnia: "port_zewnętrzny:port_wewnątrz_kontenera"
+    ports:
+      - "80:80"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/nginx.conf
+      - ./proxy/.htpasswd:/etc/nginx/.htpasswd 
+
+  frontend:
+    container_name: frontend
+    image: nginx:alpine
+    depends_on:
+      - proxy
+    volumes:
+      - ./frontend/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend/html:/usr/share/nginx/html
+
+
+  backend:
+      build: ./backend #ścieżka do folderu z dockerfile
+      container_name: backend
+      volumes:
+      - ./backend:/app            # cały folder backend
+  db:
+    image: postgres:latest 
+    container_name: baza_danych
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: haslo123
+      POSTGRES_DB: moja_db
+    volumes:
+      - pgdata:/var/lib/postgresql
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    depends_on:  # Ogarnąć bezpieczeństwo i nie wystawiać na świat !!!!
+      - db
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      SCRIPT_NAME: /pgadmin 
+
+volumes:
+  pgdata:
+    
